@@ -1,22 +1,25 @@
 # CARMA Specification Language (CaSL) Cheat Sheet
 
-This document contains useful information about the syntax of the CaSL (whose tools can be found [here](https://github.com/Quanticol/CARMA/)). The syntax in `xtext` format can be found [here](https://github.com/Quanticol/CARMA/blob/master/XTEXT/eu.quanticol.carma.core/src/eu/quanticol/carma/core/CARMA.xtext). Tutorials with examples can be found [here](https://ieeexplore.ieee.org/abstract/document/8632456) and [here](https://link.springer.com/chapter/10.1007/978-3-319-34096-8_4).
-**Disclaimer:** I am neither an author of this language nor an expert in it, but I have worked with it quite a lot. I document my findings here, in the hope that they may be useful to someone else, but **this collection may be incomplete and contain errors**. 
+This document contains useful information about the syntax of the CaSL (whose tools can be found [here](https://github.com/Quanticol/CARMA/)). The syntax in `xtext` format can be found [here](https://github.com/Quanticol/CARMA/blob/master/XTEXT/eu.quanticol.carma.core/src/eu/quanticol/carma/core/CARMA.xtext). There are tutorials with examples available [here](https://ieeexplore.ieee.org/abstract/document/8632456) and [here](https://link.springer.com/chapter/10.1007/978-3-319-34096-8_4). The formal definition of CARMA is accessible [here](https://arxiv.org/abs/1509.08560).
+
+**Disclaimer:** I am neither an author of this language nor an expert in it, but I have worked with it for about 6 months. I document my findings here, in the hope that they may be useful to someone else, but **this collection may be incomplete and contain errors**. 
 
 ## Structure of the File
 
 The basic structure of a carma file is as follows:
 
 - constants and functions
-- (space definition)
+- space definition
 - components
-    - store
-    - behaviour
-    - inital state
-- environment definition
+  - store
+  - behaviour
+  - inital state
+- system definition
+  - collective definition
+  - environment definition
     - global attributes
     - weights and probabilities
-    - reates
+    - rates
     - updates
 - measures
 
@@ -69,9 +72,17 @@ The following syntax is allowed in functions:
 - Branching: `if (condition) { // code }` or `if (condition) { //code } else { //code }`
 - Returning a value: `return x;`
 
+Calling functions works like this:
+
+```
+function_name(param1, param2, ...);
+```
+
+When calling functions, all types get passed *by value*, except for lists, which get passed *by reference*.
+
 #### Variables
 
-Variables (not store attributes) can be defined in the following way:
+Variables (not store attributes) can be defined in the following way. Variable definitions are allowed in functions, the environments rate-block, and the environments prob- and weight-blocks. They are not allowed anywhere else.
 
 ```C
 // integer
@@ -100,20 +111,31 @@ todo
 ### Components
 
 ```
+// component name and initialization parameters
 component Robot(int id){
     store{
+        // local attributes of the component
         attrib x = 42;
         attrib f = 42.5;
         attrib b = true;
     }
     behaviour{
-        Initial = action[true]<>{}.Initial;
+        // Process definitions
+        // you can use + to express different options
+        Initial = [pred_1]action[pred_2]<>{update}.Initial;
+        Parallel = nil + action2<>.Parallel;
     }
     init {
-        Initial
+        // initial process(es)
+        // you can use | to express parallelity
+        Initial | Parallel
     }
 }
 ```
+
+- `pred_1` is a boolean predicate, that constrains the activation of the action based on the components local store
+- `pred_2` is a boolean predicate, that constrains the communication partners (in this case the receivers). You can use the `my` and `sender`/`receiver` context to access the senders/receivers attributes
+- `update` is similar to the environent update, but in this case udates the components local store
 
 #### Communication
 
@@ -128,13 +150,66 @@ broadcast*[predicate]<message1, message2, ...>{store update}
 broadcast*[predicate](message1, message2, ...){store update}
 ```
 
-The predicates have a boolean value. It is possible to use the `sender` and `my` context, e.g.
+The predicates have a boolean value. It is possible to use the `sender`/`receiver` and `my` context, e.g.
 
 ```
 get[sender.location == my.location]<>{my.location == new_location}
 ```
 
+## System and Collective definition
+
+```
+
+system System1{
+    collective {
+        new Component1(parm1, param2, ...);
+        for (i; i < SIZE; 1){
+            new Component2();
+        }
+    }
+    environment{
+        //see below
+    }
+}
+
+```
+
 ## Environment Definition
+
+```
+evironment{
+    store{
+        attrib x = 42;
+        attrib ls = [:0, 1, 2, 3:];
+    }
+    weigth{
+
+    }
+    prob{
+
+    }
+    rate{
+        action1{
+            //return rate of action1
+            return 10.0;
+        }
+        default{
+            return 1.0;
+        }
+    }
+    update{
+        action1{
+            // update global (environment) attributes
+            global.x = 5;
+        }
+        action2*{
+            // broadcast action update
+            ls[0] = ls[0] + 1;
+        }
+    }
+
+}
+```
 
 ### The `weight` Block
 
@@ -163,6 +238,7 @@ var := value;
 var = value;
 // for fields, the above or
 var[i] <- value;
+// is valid
 ```
 
 ## Boolean Algebra
@@ -298,9 +374,11 @@ PI // pi constant
 E // euler constant
 ```
 
-## Workarounds
+## Useful Workarounds
 
-- **Bug:** Sometimes the compilation fails when using lists as a global variable and accessing it in the update block.
+- **Problem:** Sometimes the compilation fails when using lists as a global variable and accessing it in the update block.
 - **Workaround:** try to access it wothout the `global` context.
-- **Bug:** In the above case, sometimes the list must appear on the right side when setting a specific element.
+- **Problem:** In the above case, sometimes the list must appear on the right side when setting a specific element.
 - **Workaround:** `list[0] := list[0] * 0 + value;`
+- **Problem:** It is not possible to update a global attribute within a function
+- **Workaround:** make the attribute a (one element) list and pass the list to the function. As lists are passed by reference, it is now possible.
