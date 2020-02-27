@@ -1,6 +1,7 @@
 # CARMA Specification Language (CaSL) Cheat Sheet
 
-This document contains useful information about the syntax of the CaSL (which can be found [here](https://github.com/Quanticol/CARMA/)). It may be incomplete and contain errors. The syntax in `xtext` format can be found [here](https://github.com/Quanticol/CARMA/blob/master/XTEXT/eu.quanticol.carma.core/src/eu/quanticol/carma/core/CARMA.xtext). Tutorials with examples can be found [here](https://ieeexplore.ieee.org/abstract/document/8632456) and [here](https://link.springer.com/chapter/10.1007/978-3-319-34096-8_4).
+This document contains useful information about the syntax of the CaSL (whose tools can be found [here](https://github.com/Quanticol/CARMA/)). The syntax in `xtext` format can be found [here](https://github.com/Quanticol/CARMA/blob/master/XTEXT/eu.quanticol.carma.core/src/eu/quanticol/carma/core/CARMA.xtext). Tutorials with examples can be found [here](https://ieeexplore.ieee.org/abstract/document/8632456) and [here](https://link.springer.com/chapter/10.1007/978-3-319-34096-8_4).
+**Disclaimer:** I am neither an author of this language nor an expert in it, but I have worked with it quite a lot. I document my findings here, in the hope that they may be useful to someone else, but **this collection may be incomplete and contain errors**. 
 
 ## Structure of the File
 
